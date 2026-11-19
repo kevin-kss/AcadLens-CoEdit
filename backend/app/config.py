@@ -67,6 +67,16 @@ class Settings(BaseSettings):
         default=2, ge=1, description="单句抽象词数达此值且无具象锚点即触发 LOW_INFO_DENSITY"
     )
 
+    # ---- 术语预提取（C-Value）----
+    term_max_words: int = Field(
+        default=5, ge=1, description="候选术语的最大词数（中文按 2 字/词近似）"
+    )
+    term_min_frequency: int = Field(
+        default=2, ge=1, description="进入 C-Value 计算的最低出现次数，低频候选噪声大"
+    )
+    term_min_score: float = Field(default=1.0, ge=0, description="候选术语的 C-Value 下限")
+    term_top_k: int = Field(default=30, ge=1, description="推送给前端的候选术语上限")
+
     # ---- 聚合权重 ----
     weight_dual_syntactic: float = 0.45
     weight_dual_lexicon: float = 0.55
