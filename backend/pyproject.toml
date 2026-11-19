@@ -10,6 +10,8 @@ dependencies = [
     "numpy>=2.0",
     "pyahocorasick>=2.1",
     "spacy>=3.8",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
 ]
 
 [project.optional-dependencies]
@@ -25,6 +27,7 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.7",
     "mypy>=1.13",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -68,6 +71,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN201", "ANN001"]
+# FastAPI 依赖注入必须写在参数默认值里，B008 在路由文件里是误报
+"app/api/**/*.py" = ["B008"]
 
 # ---------------------------------------------------------------------------
 # mypy：strict 模式，跨层数据结构一律走 Pydantic，不传裸 dict
@@ -95,4 +100,9 @@ pythonpath = ["."]
 addopts = "-q --strict-markers"
 markers = [
     "needs_spacy_model: 需要已安装 spaCy 依存模型才能运行",
+]
+filterwarnings = [
+    # starlette 提示改用 httpx2；TestClient 本身仍可用，等上游稳定后再迁移
+    "ignore:Using `httpx` with `starlette.testclient`:DeprecationWarning",
+    "ignore:Using `httpx` with `starlette.testclient`",
 ]
