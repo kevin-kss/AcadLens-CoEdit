@@ -1,0 +1,63 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "dictionaries/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "dictionaries/**"
+      - ".github/workflows/backend.yml"
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    strategy:
+      fail-fast: false
+      matrix:
+        # 两种形态都必须绿：无模型（Track B 走词性近似降级）与装模型（真实依存骨架）。
+        # 只测一种会让降级路径或 dep 路径之一静默腐坏。
+        spacy_models: [false, true]
+    name: quality (spacy_models=${{ matrix.spacy_models }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/pyproject.toml
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install spaCy dependency models
+        if: matrix.spacy_models
+        run: uv sync --extra models
+
+      # lint 与类型检查不是可选项：纯 Python 服务端靠工程纪律补偿静态类型安全感。
+      - name: Ruff lint
+        run: uv run ruff check . --output-format=github
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Mypy strict
+        run: uv run mypy app tests
+
+      - name: Pytest
+        run: uv run pytest -q

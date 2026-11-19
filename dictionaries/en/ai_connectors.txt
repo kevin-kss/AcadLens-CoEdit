@@ -1,0 +1,238 @@
+# English high-frequency AI connectors and filler phrases (Track C / Aho-Corasick)
+# One entry per line; lines starting with # are comments, blank lines ignored.
+# Matching is case-insensitive and word-boundary aware (see track_c_lexicon.py).
+
+# ---- Additive / escalating ----
+moreover
+furthermore
+additionally
+in addition
+besides
+what is more
+on top of that
+not only that
+coupled with
+together with
+alongside this
+building on this
+building upon this
+expanding on this
+to further illustrate
+it is worth noting that
+it is worth mentioning that
+it is important to note that
+it is important to highlight that
+it should be noted that
+it should be emphasized that
+notably
+importantly
+crucially
+significantly
+of particular note
+equally important
+more importantly
+most importantly
+
+# ---- Contrastive ----
+however
+nevertheless
+nonetheless
+conversely
+on the contrary
+on the other hand
+in contrast
+by contrast
+that said
+having said that
+be that as it may
+whereas
+while
+albeit
+notwithstanding
+despite this
+in spite of this
+yet
+still
+alternatively
+
+# ---- Causal / inferential ----
+therefore
+thus
+hence
+consequently
+accordingly
+as a result
+as a consequence
+for this reason
+owing to this
+due to this
+which in turn
+thereby
+this implies that
+this suggests that
+this indicates that
+this demonstrates that
+this underscores that
+this highlights that
+this reveals that
+it follows that
+it stands to reason that
+the findings suggest
+the results indicate
+the evidence suggests
+research has shown
+studies have shown
+prior work has shown
+
+# ---- Summative ----
+in conclusion
+to conclude
+in summary
+to summarize
+in short
+in brief
+in essence
+ultimately
+overall
+all in all
+all things considered
+taken together
+on the whole
+to sum up
+in closing
+finally
+lastly
+to recapitulate
+the key takeaway
+the bottom line
+
+# ---- Enumerative ----
+firstly
+first and foremost
+secondly
+thirdly
+fourthly
+to begin with
+for one thing
+for another
+next
+subsequently
+then
+in the first instance
+in the second instance
+
+# ---- Hedging / stance filler ----
+arguably
+indeed
+in fact
+as a matter of fact
+needless to say
+it goes without saying
+undoubtedly
+unquestionably
+without a doubt
+clearly
+obviously
+evidently
+naturally
+of course
+certainly
+to a certain extent
+to some degree
+in a sense
+by and large
+generally speaking
+broadly speaking
+in general
+typically
+for the most part
+
+# ---- Overused academic-AI vocabulary ----
+delve into
+delves into
+delving into
+pivotal
+pivotal role
+crucial role
+vital role
+integral role
+key role
+paramount
+of paramount importance
+multifaceted
+myriad
+a myriad of
+plethora
+a plethora of
+landscape
+the evolving landscape
+in today's landscape
+realm
+in the realm of
+the ever-changing
+ever-evolving
+rapidly evolving
+cutting-edge
+state-of-the-art
+groundbreaking
+game-changing
+transformative
+revolutionize
+harness
+harness the power of
+leverage
+leveraging
+unlock
+unlock the potential
+unleash
+foster
+fostering
+underscore
+underscores the importance
+testament
+a testament to
+navigate
+navigating the complexities
+embark
+embark on a journey
+shed light on
+pave the way
+paves the way for
+at the forefront
+the intersection of
+holistic
+holistic approach
+robust
+robust framework
+seamless
+seamlessly integrate
+synergy
+synergistic
+tapestry
+intricate
+intricacies
+nuanced
+nuances
+profound
+profound impact
+far-reaching
+far-reaching implications
+invaluable
+indispensable
+unprecedented
+remarkable
+noteworthy
+compelling
+in an era where
+in a world where
+as we move forward
+looking ahead
+moving forward
+it is crucial to
+it is essential to
+it is imperative to
+plays a significant role
+serves as
+stands as
+plays a crucial part
+plays an important part

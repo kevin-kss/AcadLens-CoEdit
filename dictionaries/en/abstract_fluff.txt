@@ -1,0 +1,170 @@
+# English low-information-density vocabulary (Track C fluff ratio)
+# These words are not errors by themselves — the problem is a sentence built
+# only from them, with no concrete anchor (number, percentage, citation, formula).
+# Rule: >= 2 hits in one sentence with ConcreteAnchors == 0 triggers
+# LOW_INFO_DENSITY, which in turn seeds the Stage 1 slot-filling prompts.
+
+# ---- Vague magnitude / evaluation ----
+significantly improves
+significantly improved
+significantly enhances
+significantly enhanced
+significantly reduces
+substantially improves
+substantially better
+considerably improves
+markedly improves
+greatly enhances
+greatly improves
+vastly improved
+dramatically improves
+notably improves
+effectively addresses
+effectively solves
+effectively mitigates
+effectively improves
+successfully addresses
+successfully demonstrates
+clearly outperforms
+consistently outperforms
+superior performance
+excellent performance
+strong performance
+promising performance
+promising results
+encouraging results
+favorable results
+satisfactory results
+competitive results
+impressive results
+better results
+improved accuracy
+enhanced efficiency
+increased robustness
+higher quality
+optimal performance
+
+# ---- Empty hedged nouns ----
+various factors
+numerous factors
+multiple factors
+several factors
+a range of factors
+different aspects
+various aspects
+multiple dimensions
+several dimensions
+different perspectives
+various perspectives
+multiple levels
+different contexts
+various contexts
+complex scenarios
+complex environments
+real-world scenarios
+real-world settings
+practical applications
+practical significance
+practical implications
+theoretical significance
+theoretical implications
+broad applicability
+wide applicability
+general applicability
+great potential
+significant potential
+considerable potential
+valuable insights
+important insights
+useful insights
+deeper understanding
+better understanding
+comprehensive understanding
+new perspectives
+novel insights
+meaningful contributions
+important contributions
+substantial contributions
+
+# ---- Process filler ----
+plays an important role
+plays a key role
+plays a vital role
+plays a significant role
+is of great importance
+is of great significance
+is of critical importance
+has attracted much attention
+has attracted considerable attention
+has attracted increasing attention
+has received growing attention
+has gained widespread attention
+has been widely studied
+has been extensively studied
+has been the subject of
+remains an open problem
+remains a challenge
+poses significant challenges
+presents unique challenges
+is worth investigating
+warrants further investigation
+requires further study
+deserves further attention
+opens new avenues
+opens up possibilities
+provides a foundation
+lays the groundwork
+sheds new light
+offers new opportunities
+holds great promise
+shows great promise
+demonstrates the effectiveness
+validates the effectiveness
+confirms the effectiveness
+verifies the feasibility
+
+# ---- Abstract qualifiers ----
+to a large extent
+to a great extent
+to a significant degree
+in many respects
+in various ways
+in numerous ways
+in several respects
+in a number of cases
+under certain conditions
+under various conditions
+in appropriate circumstances
+where applicable
+as needed
+as appropriate
+relatively speaking
+comparatively speaking
+reasonably well
+fairly well
+quite effective
+highly effective
+highly efficient
+highly robust
+highly scalable
+highly relevant
+extremely important
+exceptionally useful
+particularly noteworthy
+especially relevant
+increasingly important
+growing importance
+emerging trend
+rapid development
+continuous improvement
+ongoing efforts
+sustained growth
+long-term mechanism
+systematic approach
+integrated approach
+comprehensive framework
+unified framework
+general framework
+end-to-end solution
+scalable solution
+practical solution

@@ -1,0 +1,252 @@
+{
+  "$comment": "Opening-filler ('hat') and closing-elevation ('boot') sentence rules. position: head=first sentence only, tail=last sentence only, any=anywhere. Regexes are Python re syntax, applied with re.IGNORECASE. severity: 3=whole sentence is deletable filler, 2=needs rewriting with concrete anchors, 1=advisory.",
+  "version": "1.0.0",
+  "lang": "en",
+  "patterns": [
+    {
+      "id": "en_head_in_era",
+      "position": "head",
+      "regex": "^In (?:today's|this|an|the modern|the current|the present|a rapidly (?:changing|evolving))[^.!?]{0,40}(?:world|era|age|landscape|society|environment|climate)[^.!?]{0,60}[.!?]",
+      "severity": 3,
+      "message": "Era-framing opener: reviewers do not need to be told what era this is. Start from the paragraph's actual claim."
+    },
+    {
+      "id": "en_head_with_advent",
+      "position": "head",
+      "regex": "^(?:With|Given) the (?:advent|rise|emergence|proliferation|rapid (?:development|growth|advancement)|increasing (?:availability|adoption|use))[^.!?]{0,70}[.!?]",
+      "severity": 3,
+      "message": "\"With the rise of ...\" opener carries no information. Delete it, or replace with the specific dates and numbers behind that rise."
+    },
+    {
+      "id": "en_head_recent_years",
+      "position": "head",
+      "regex": "^(?:In recent years|Over the (?:past|last) (?:few )?(?:years|decade|decades)|Recently)[^.!?]{0,80}[.!?]",
+      "severity": 2,
+      "message": "\"In recent years\": name the years, the publication count, or the adoption figure that makes the trend real."
+    },
+    {
+      "id": "en_head_attracted_attention",
+      "position": "head",
+      "regex": "^[^.!?]{0,60}(?:has|have) (?:attracted|received|garnered|gained)[^.!?]{0,30}(?:attention|interest|popularity|traction)[^.!?]{0,40}[.!?]",
+      "severity": 2,
+      "message": "\"has attracted increasing attention\": whose attention, measured how? Add citation counts or venue data, or cut the sentence."
+    },
+    {
+      "id": "en_head_plays_role",
+      "position": "head",
+      "regex": "^[^.!?]{0,50}plays? (?:an?|a critical|a crucial|a vital|a pivotal|an important|a key|a significant|an integral) [^.!?]{0,20}role[^.!?]{0,50}[.!?]",
+      "severity": 2,
+      "message": "Opening \"plays a crucial role\" is an assertion of importance, not evidence of it. State what breaks without it."
+    },
+    {
+      "id": "en_head_well_known",
+      "position": "head",
+      "regex": "^(?:It is (?:well[- ]known|widely (?:known|accepted|recognized)|common knowledge)|As is well known|Needless to say|It goes without saying)[^.!?]{0,70}[.!?]",
+      "severity": 3,
+      "message": "\"It is well known that\": if it truly is, omit it; if it is not, cite a source."
+    },
+    {
+      "id": "en_head_textbook_definition",
+      "position": "head",
+      "regex": "^[A-Z][^.!?]{0,40}(?:is|refers to|is defined as|can be defined as|is a (?:type|class|form|kind) of)[^.!?]{0,30}(?:technique|approach|method|framework|paradigm|architecture|mechanism|process|phenomenon)[^.!?]{0,40}[.!?]",
+      "severity": 1,
+      "message": "Textbook definition opener: drop it if the reader already has this background, or fold it into the surrounding text."
+    },
+    {
+      "id": "en_head_however_existing",
+      "position": "head",
+      "regex": "^(?:However|Nevertheless|Nonetheless|Yet|Despite (?:this|these|such))[^.!?]{0,20},?[^.!?]{0,30}(?:existing|prior|previous|current|traditional|conventional|state-of-the-art)[^.!?]{0,25}(?:approaches|methods|works|models|techniques|studies|systems)[^.!?]{0,30}(?:suffer|fail|struggle|remain|still|are limited|have limitations)[^.!?]{0,50}[.!?]",
+      "severity": 2,
+      "message": "Generic \"existing methods still suffer from limitations\": name the paper, the metric, and the size of the gap."
+    },
+    {
+      "id": "en_tail_significance",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}(?:is|are|has|have) (?:of )?(?:great|significant|considerable|critical|paramount|practical|theoretical|important)[^.!?]{0,20}(?:importance|significance|value|implications?)[^.!?]{0,40}[.!?]\\s*$",
+      "severity": 3,
+      "message": "Closing significance claim: the paragraph loses nothing if you delete this sentence."
+    },
+    {
+      "id": "en_tail_promise_potential",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}(?:holds?|shows?|offers?|demonstrates?|has) (?:great|significant|considerable|enormous|tremendous|substantial|much|immense)[^.!?]{0,20}(?:promise|potential|opportunity|room)[^.!?]{0,40}[.!?]\\s*$",
+      "severity": 3,
+      "message": "\"holds great promise\" ending: keep it only if this paragraph supplied the numbers that justify the promise."
+    },
+    {
+      "id": "en_tail_paves_way",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}(?:paves? the way|opens? (?:up )?(?:new )?(?:avenues|possibilities|opportunities|doors)|lays? the (?:ground ?work|foundation)|sheds? (?:new )?light|sets? the stage)[^.!?]{0,50}[.!?]\\s*$",
+      "severity": 3,
+      "message": "\"paves the way for future work\" is self-congratulation reviewers read as padding. Cut it."
+    },
+    {
+      "id": "en_tail_provides_insights",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}provides?[^.!?]{0,25}(?:valuable|important|useful|meaningful|novel|new|deeper)[^.!?]{0,15}(?:insights?|understanding|perspectives?|guidance|reference|basis)[^.!?]{0,40}[.!?]\\s*$",
+      "severity": 3,
+      "message": "\"provides valuable insights\": any paper can claim this, so it says nothing. Replace with the specific finding."
+    },
+    {
+      "id": "en_tail_demonstrates_effectiveness",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}(?:demonstrates?|validates?|confirms?|verifies?|proves?)[^.!?]{0,20}(?:the )?(?:effectiveness|efficacy|feasibility|superiority|validity|usefulness)[^.!?]{0,40}[.!?]\\s*$",
+      "severity": 2,
+      "message": "\"demonstrates the effectiveness of\": give the metric and the delta instead of the verdict."
+    },
+    {
+      "id": "en_tail_future_work",
+      "position": "tail",
+      "regex": "[^.!?]{0,60}(?:(?:warrants?|requires?|merits?|deserves?|calls for)[^.!?]{0,20}(?:further|additional|future|more)[^.!?]{0,20}(?:investigation|research|study|work|attention|exploration)|remains? (?:an open (?:problem|question)|to be (?:explored|investigated|seen)))[^.!?]{0,40}[.!?]\\s*$",
+      "severity": 2,
+      "message": "\"requires further investigation\": if this is a real limitation of your work, state which one; otherwise delete."
+    },
+    {
+      "id": "en_tail_summary_connector",
+      "position": "tail",
+      "regex": "^(?:In (?:conclusion|summary|short|brief|essence)|To (?:conclude|summarize|sum up)|Overall|All in all|All things considered|Taken together|On the whole|Ultimately)[^a-z]",
+      "severity": 2,
+      "message": "Explicit summary connector: a clear paragraph does not need to announce that it is now summarizing."
+    },
+    {
+      "id": "en_tail_looking_ahead",
+      "position": "tail",
+      "regex": "^(?:Looking (?:ahead|forward)|(?:As we )?[Mm]oving forward|Going forward|In the future|In the years to come)[^.!?]{0,80}[.!?]\\s*$",
+      "severity": 2,
+      "message": "Forward-looking closer belongs in the conclusion, and only with a concrete plan."
+    },
+    {
+      "id": "en_any_it_is_worth_noting",
+      "position": "any",
+      "regex": "\\b(?:[Ii]t is worth (?:noting|mentioning|emphasizing|highlighting|pointing out)|[Ii]t (?:is|should be) (?:important|essential|crucial|necessary) to (?:note|mention|emphasize|highlight|point out)|[Ii]t should be (?:noted|emphasized|mentioned|pointed out))\\b[^.!?]{0,10}that\\b",
+      "severity": 3,
+      "message": "\"It is worth noting that\": delete the clause and the sentence still reads correctly. It only announces attention."
+    },
+    {
+      "id": "en_any_delve_landscape",
+      "position": "any",
+      "regex": "\\b(?:delv(?:e|es|ing) into|navigat(?:e|es|ing) the (?:complexit(?:y|ies)|intricacies|landscape)|harness(?:es|ing)? the power of|unlock(?:s|ing)? the (?:potential|power)|embark(?:s|ing)? on (?:a|this) journey|at the forefront of|the intersection of|a testament to|the ever[- ](?:changing|evolving)|in the realm of)\\b",
+      "severity": 3,
+      "message": "Signature LLM vocabulary (delve into, harness the power of, navigate the complexities): replace with a plain verb."
+    },
+    {
+      "id": "en_any_pivotal_multifaceted",
+      "position": "any",
+      "regex": "\\b(?:pivotal|multifaceted|myriad|plethora|paramount|holistic|synergistic|transformative|groundbreaking|game[- ]changing|cutting[- ]edge|unprecedented|far[- ]reaching|invaluable|indispensable)\\b",
+      "severity": 2,
+      "message": "Inflated adjective typical of generated prose: state the magnitude instead of the superlative."
+    },
+    {
+      "id": "en_any_not_only_but_also",
+      "position": "any",
+      "regex": "\\bnot only\\b[^.!?]{3,40}\\bbut also\\b",
+      "severity": 1,
+      "message": "\"not only ... but also\": a highly symmetric construction LLMs overuse. Split into two sentences of unequal length."
+    },
+    {
+      "id": "en_any_by_leveraging",
+      "position": "any",
+      "regex": "\\b(?:[Bb]y (?:leveraging|utilizing|employing|harnessing|exploiting)|[Tt]hrough the (?:use|application|integration) of)\\b[^.!?]{3,40},?\\s*(?:we|our|this|the proposed|it)\\b",
+      "severity": 1,
+      "message": "\"By leveraging X, we achieve Y\": a symmetric prepositional frame. Use an active verb and the concrete result."
+    },
+    {
+      "id": "en_any_vague_improvement",
+      "position": "any",
+      "regex": "\\b(?:significantly|substantially|considerably|markedly|greatly|dramatically|notably|vastly|effectively)\\s+(?:improv|enhanc|reduc|increas|decreas|boost|outperform|mitigat|accelerat|optimiz)\\w*(?![^.!?]{0,25}(?:\\d|\\{\\{))",
+      "severity": 2,
+      "message": "Degree adverb + improvement verb with no number: state by how much, on which benchmark."
+    },
+    {
+      "id": "en_any_research_shows_no_cite",
+      "position": "any",
+      "regex": "\\b(?:[Rr]esearch(?:ers)? (?:has|have) shown|[Ss]tudies have (?:shown|demonstrated|found)|[Pp]rior work has shown|[Ee]vidence suggests|[Ii]t has been shown)\\b(?![^.!?]{0,40}\\{\\{CITE)",
+      "severity": 2,
+      "message": "\"Studies have shown\" with no citation: add the reference or drop the claim."
+    },
+    {
+      "id": "en_any_many_researchers",
+      "position": "any",
+      "regex": "\\b(?:many|numerous|several|various|a (?:number|growing number) of|an increasing number of)\\s+(?:researchers|scholars|studies|authors|works|papers)\\b(?![^.!?]{0,40}\\{\\{CITE)",
+      "severity": 2,
+      "message": "\"Many researchers argue\": cite the specific works rather than hiding behind a collective noun."
+    },
+    {
+      "id": "en_any_complex_scenarios",
+      "position": "any",
+      "regex": "\\b(?:complex|real[- ]world|practical|challenging|diverse|various)\\s+(?:scenarios|settings|environments|conditions|situations|contexts|applications)\\b",
+      "severity": 2,
+      "message": "\"real-world scenarios\": name the setting and the specific perturbations involved."
+    },
+    {
+      "id": "en_any_robustness_claim",
+      "position": "any",
+      "regex": "\\b(?:(?:good|strong|high|excellent|superior|satisfactory|desirable)\\s+(?:robustness|stability|generalization|generalizability|interpretability|scalability|accuracy)|(?:highly|very)\\s+(?:robust|scalable|accurate|efficient|interpretable|generalizable))\\b",
+      "severity": 2,
+      "message": "\"strong robustness\": report the perturbation range and how far the metric moved."
+    },
+    {
+      "id": "en_any_state_of_the_art",
+      "position": "any",
+      "regex": "\\b(?:achieve[sd]?|attain(?:s|ed)?|reach(?:es|ed)?|obtain(?:s|ed)?)\\s+(?:the\\s+)?(?:state[- ]of[- ]the[- ]art|SOTA|superior|competitive|promising|excellent|impressive|remarkable)\\s*(?:performance|results?|accuracy)?\\b(?![^.!?]{0,30}(?:\\d|\\{\\{))",
+      "severity": 2,
+      "message": "\"achieves state-of-the-art performance\" with no figure: give the metric, the number, and the baseline it beats."
+    },
+    {
+      "id": "en_any_in_other_words",
+      "position": "any",
+      "regex": "\\b(?:[Ii]n other words|[Tt]hat is to say|[Pp]ut (?:differently|another way)|[Ss]imply put|[Tt]o put it (?:simply|differently))\\b[,]?",
+      "severity": 2,
+      "message": "\"In other words\": if the previous sentence was clear this is redundant; if it was not, rewrite that sentence."
+    },
+    {
+      "id": "en_any_this_suggests",
+      "position": "any",
+      "regex": "\\b[Tt]his\\s+(?:suggests|implies|indicates|demonstrates|underscores|highlights|reveals|points to|speaks to)\\s+(?:that\\s+)?(?:the\\s+)?(?:importance|need|significance|value|potential|fact)\\b",
+      "severity": 2,
+      "message": "\"This underscores the importance of\": a filler inference step. State the consequence directly."
+    },
+    {
+      "id": "en_any_increasingly_important",
+      "position": "any",
+      "regex": "\\b(?:increasingly|ever more|progressively|growing(?:ly)?)\\s+(?:important|critical|relevant|prevalent|popular|common|complex|challenging|significant)\\b",
+      "severity": 2,
+      "message": "\"increasingly important\": quantify the trend or give the interval over which it holds."
+    },
+    {
+      "id": "en_any_cannot_be_overstated",
+      "position": "any",
+      "regex": "\\b(?:cannot be (?:overstated|ignored|overlooked|understated)|should not be (?:ignored|overlooked|underestimated)|must not be (?:ignored|overlooked))\\b",
+      "severity": 2,
+      "message": "\"cannot be overstated\": show the consequence of ignoring it rather than asserting its weight."
+    },
+    {
+      "id": "en_any_triple_parallel",
+      "position": "any",
+      "regex": "\\b(?:\\w+(?:ing|ity|tion|ness|ment)\\b,\\s+){2,}(?:and\\s+)?\\w+(?:ing|ity|tion|ness|ment)\\b",
+      "severity": 1,
+      "message": "Three-plus parallel abstract nouns: a hallmark LLM rhythm. Break the list or convert it to bullets."
+    },
+    {
+      "id": "en_any_serves_as",
+      "position": "any",
+      "regex": "\\b(?:serves? as|stands? as|acts? as|functions? as|emerges? as)\\s+(?:a|an|the)\\s+(?:crucial|critical|key|vital|important|powerful|promising|valuable|fundamental|essential)\\b",
+      "severity": 2,
+      "message": "Copula dodge (\"serves as a crucial\"): use the plain verb and say what it does."
+    },
+    {
+      "id": "en_any_rhetorical_question",
+      "position": "any",
+      "regex": "^(?:But |So |Now |Then )?(?:[Ww]hy|[Ww]hat|[Hh]ow|[Cc]an|[Dd]oes|[Ii]s|[Ss]hould)\\b[^.!?]{0,60}\\?",
+      "severity": 2,
+      "message": "Rhetorical question: academic prose rarely needs self-posed questions. Give the claim."
+    },
+    {
+      "id": "en_any_hedge_stack",
+      "position": "any",
+      "regex": "\\b(?:may|might|could|can)\\s+(?:potentially|possibly|conceivably|arguably)\\s+\\w+|\\b(?:it (?:is|seems) (?:possible|likely|plausible) that)\\b[^.!?]{0,30}\\b(?:may|might|could)\\b",
+      "severity": 1,
+      "message": "Stacked hedges (\"may potentially\"): keep one hedge, not two."
+    }
+  ]
+}
