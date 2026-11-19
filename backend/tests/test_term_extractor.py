@@ -141,15 +141,64 @@ class TestGeneralBehaviour:
         scores = [c.score for c in extract_terms(ZH_TEXT, Lang.ZH).candidates]
         assert scores == sorted(scores, reverse=True)
 
-    def test_singleton_frequency_filtered(self):
-        """只出现一次的候选默认不入选（term_min_frequency = 2）。"""
-        result = extract_terms("一个只出现一次的特殊名词短语。", Lang.ZH)
+    def test_single_word_singleton_filtered(self):
+        """单词候选只出现一次时不入选（term_min_frequency = 2）。
+
+        单词缺少「多词连用」这一 termhood 证据，低频单词噪声极大。
+        """
+        result = extract_terms("收敛。", Lang.ZH)
         assert result.candidates == []
+
+    def test_multiword_singleton_is_kept(self):
+        """多词短语出现一次即入选。
+
+        「多头自注意力机制」四个词连用不会是偶然，而只出现一次的核心术语
+        恰恰是用户最需要锁定的 —— 统一按 2 次过滤会把它整条滤掉。
+        """
+        terms = terms_of("本文提出多头自注意力机制。", Lang.ZH)
+        assert any("自注意力" in t for t in terms)
 
     def test_all_candidates_have_positive_score(self):
         for candidate in extract_terms(ZH_TEXT, Lang.ZH).candidates:
             assert candidate.score > 0
-            assert candidate.frequency >= 2
+            assert candidate.frequency >= 1
+
+    def test_generic_single_words_excluded(self):
+        """epoch、应用 这类通用单词会凭频次挤掉真正的术语，须按形态排除。"""
+        text = "该应用很重要。该应用的价值在于此。我们跑了 90 个 epoch，又跑 10 个 epoch。"
+        terms = terms_of(text, Lang.ZH)
+        assert "应用" not in terms
+
+    def test_technical_single_words_kept(self):
+        """RMSE、ResNet-50 形态上像专名，即便是单词也应保留。"""
+        text = "RMSE 降低明显。RMSE 是主要指标。"
+        assert "RMSE" in terms_of(text, Lang.ZH)
+
+    def test_cliches_not_suggested_as_terms(self):
+        """被诊断标为套话的词不能出现在「建议锁定」列表里，否则自相矛盾。"""
+        text = (
+            "在当今社会，该方法很重要。综上所述，本研究意义重大。"
+            "在当今社会，综上所述，这一点显而易见。"
+        )
+        terms = terms_of(text, Lang.ZH)
+        for cliche in ("当今社会", "综上所述"):
+            assert cliche not in terms
+
+    def test_case_variants_merged(self):
+        """句首 Multi-head 与句中 multi-head 是同一术语，分开计数会腰斩得分。"""
+        text = (
+            "Multi-head self-attention is used here. We extend multi-head self-attention further."
+        )
+        candidates = extract_terms(text, Lang.EN).candidates
+        matched = [c for c in candidates if c.term.lower() == "multi-head self-attention"]
+        assert len(matched) == 1
+        assert matched[0].frequency == 2
+
+    def test_canonical_surface_preserves_original_case(self):
+        """术语要原样回写进正文，不能把 ResNet-50 显示成 resnet-50。"""
+        text = "We train ResNet-50 here. ResNet-50 converges fast with ResNet-50 blocks."
+        terms = terms_of(text, Lang.EN)
+        assert not any(t.startswith("resnet") for t in terms)
 
     def test_no_newline_in_any_candidate(self):
         for candidate in extract_terms(ZH_TEXT, Lang.ZH).candidates:

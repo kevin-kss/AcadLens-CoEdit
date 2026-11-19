@@ -40,6 +40,17 @@ _LATIN_TERM_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)*")
 # 纯数字、纯标点、单字符中文不作为术语
 _PURE_NUMBER_RE = re.compile(r"^[\d.,%]+$")
 
+# 「技术形态」的单词：含大写字母、数字或连字符。
+# RMSE、ResNet-50、ImageNet-1k、Top-1、Transformer 命中；
+# epoch、应用、方法 这类通用词不命中。
+# 单词候选缺少「多词组合」这一termhood证据，故额外要求形态上像专名，
+# 否则通用名词会凭频次挤掉真正的术语。
+_TECHNICAL_SHAPE_RE = re.compile(r"[A-Z]|\d|[-_]")
+
+
+def _is_technical_single_word(phrase: str) -> bool:
+    return bool(_TECHNICAL_SHAPE_RE.search(phrase))
+
 
 def _has_newline(text: str, start: int, end: int) -> bool:
     """两个成分之间是否夹着换行。"""
@@ -269,16 +280,68 @@ def extract_terms(
     else:
         phrases, source = _candidates_from_ngram(cleaned, lang_enum), "ngram"
 
-    freqs = Counter(phrases)
-    # 低频候选不进 C-Value：噪声多且 nested 统计是 O(n²)，先截断可观地省时
-    freqs = Counter({t: c for t, c in freqs.items() if c >= settings.term_min_frequency})
+    # 大小写归一化后计数：句首的 "Multi-head self-attention" 与句中的
+    # "multi-head self-attention" 是同一个术语，分开计数会让两者各分走一半
+    # 频次，真实术语的得分被腰斩。展示时保留出现次数最多的那种写法 ——
+    # 术语要原样回写进正文，不能把 ResNet-50 显示成 resnet-50。
+    surface_counts: dict[str, Counter[str]] = {}
+    for phrase in phrases:
+        surface_counts.setdefault(phrase.lower(), Counter())[phrase] += 1
+
+    canonical = {key: surfaces.most_common(1)[0][0] for key, surfaces in surface_counts.items()}
+    freqs = Counter(
+        {canonical[key]: sum(surfaces.values()) for key, surfaces in surface_counts.items()}
+    )
+
+    # 频次门槛按词数分别设定：
+    # 多词短语本身就是强 termhood 证据（「多头自注意力机制」四个词连用不会
+    # 是偶然），出现一次即可入选；单词候选缺少这一证据，需要更高频次。
+    # 统一用 min_frequency=2 会把只出现一次的核心术语整条滤掉 —— 而那恰恰
+    # 是用户最需要锁定的词。
+    freqs = Counter(
+        {
+            t: c
+            for t, c in freqs.items()
+            if c
+            >= (
+                settings.term_min_frequency
+                if _word_count(t, lang_enum) == 1
+                else settings.term_multiword_min_frequency
+            )
+        }
+    )
     if not freqs:
         return TermExtractionResult(lang=lang_enum, candidates=[], skeleton_source=source)
+
+    # 套话与空泛词不是术语：复用 Track C 的词库，避免「综上所述」「当今社会」
+    # 这类被诊断标为问题的词反过来出现在「建议锁定」列表里，自相矛盾。
+    #
+    # 用双向子串匹配而非精确相等：词库条目是「在当今社会」，而词性过滤抽出的
+    # 候选是「当今社会」（介词不入候选），精确匹配会漏掉。反向也要查 ——
+    # 候选「显著提升效能」包含词库里的「显著提升」。
+    lexicon = load_lexicon(lang_enum)
+    cliches = [w.lower() for w in (*lexicon.connectors, *lexicon.fluff)]
+
+    def is_cliche(term: str) -> bool:
+        lowered = term.lower()
+        return any(
+            lowered in cliche or cliche in lowered
+            for cliche in cliches
+            # 只与长度相近的条目比：否则单字词库条目会命中一切候选
+            if abs(len(cliche) - len(lowered)) <= 4
+        )
 
     nested = _nested_counts(freqs)
     candidates: list[TermCandidate] = []
     for term, freq in freqs.items():
+        if is_cliche(term):
+            continue
         words = _word_count(term, lang_enum)
+        # 单词候选只有在形态上像专名时才保留：它缺少「多词组合」这一
+        # termhood 证据，若只看频次，epoch、应用、方法 这类通用词会把
+        # 真正的术语挤出 top_k。
+        if words == 1 and not _is_technical_single_word(term):
+            continue
         # 单词候选的 log2(1)=0 会把分数清零，故改用 0.5 权重，
         # 否则 RMSE、Transformer 这类单词术语永远提不出来。
         weight = math.log2(words) if words > 1 else 0.5

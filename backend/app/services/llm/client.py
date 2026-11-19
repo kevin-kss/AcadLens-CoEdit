@@ -59,6 +59,7 @@ class OpenAICompatClient:
     model: str = ""
     timeout: float = 120.0
     max_retries: int = 2
+    user_agent: str = "AcadLens-CoEdit/0.1"
 
     def __post_init__(self) -> None:
         settings = get_settings()
@@ -96,6 +97,10 @@ class OpenAICompatClient:
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.api_key}",
+                    # 必须显式设 User-Agent：urllib 默认发 "Python-urllib/3.x"，
+                    # 而 Cloudflare 等前置防护会直接以 403（error code 1010）拦掉它。
+                    # 实测同一请求换掉 UA 即 200，不设这行会让所有云端接口不可用。
+                    "User-Agent": self.user_agent,
                 },
                 method="POST",
             )

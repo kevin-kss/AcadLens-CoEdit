@@ -128,6 +128,37 @@ class TestRequestConstruction:
         assert captured.request is not None
         assert captured.request.full_url == "http://x/v1/chat/completions"
 
+    def test_user_agent_header_is_set(self, monkeypatch: pytest.MonkeyPatch):
+        """必须显式发 User-Agent。
+
+        urllib 默认发 "Python-urllib/3.x"，Cloudflare 等前置防护会直接以 403
+        （error code 1010）拦掉它 —— 实测同一请求仅换 UA 即从 403 变 200。
+        不设这个头会让所有经 CDN 的云端接口不可用，而本地 Ollama 正常，
+        于是问题只在接真实云端时才暴露。
+        """
+        captured = _Captured()
+        _patch_urlopen(monkeypatch, _ok_payload(), captured)
+        client = OpenAICompatClient(base_url="http://x/v1", api_key="k", model="m")
+        client.complete([])
+
+        assert captured.request is not None
+        headers = {k.lower(): v for k, v in captured.request.headers.items()}
+        ua = headers.get("User-agent".lower()) or headers.get("user-agent")
+        assert ua, "未发送 User-Agent 头"
+        assert "python-urllib" not in ua.lower(), f"UA 仍是 urllib 默认值: {ua}"
+
+    def test_user_agent_is_overridable(self, monkeypatch: pytest.MonkeyPatch):
+        """个别网关会按 UA 白名单放行，故留出覆盖入口。"""
+        captured = _Captured()
+        _patch_urlopen(monkeypatch, _ok_payload(), captured)
+        client = OpenAICompatClient(
+            base_url="http://x/v1", api_key="k", model="m", user_agent="custom-agent/9"
+        )
+        client.complete([])
+        assert captured.request is not None
+        headers = {k.lower(): v for k, v in captured.request.headers.items()}
+        assert headers["user-agent"] == "custom-agent/9"
+
     def test_authorization_header_sent(self, monkeypatch: pytest.MonkeyPatch):
         captured = _Captured()
         _patch_urlopen(monkeypatch, _ok_payload(), captured)

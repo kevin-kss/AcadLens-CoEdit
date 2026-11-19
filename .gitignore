@@ -112,3 +112,7 @@ desktop.ini
 
 # ===== AI 工具本地状态 =====
 .claude/settings.local.json
+
+# ===== 本地验证产物 =====
+.playwright-mcp/
+workbench-*.png
