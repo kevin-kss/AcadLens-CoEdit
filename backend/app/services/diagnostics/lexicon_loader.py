@@ -99,7 +99,10 @@ def _read_hat_boot(path: Path) -> tuple[HatBootRule, ...]:
     return tuple(rules)
 
 
-_CACHE: dict[tuple[Lang, tuple[float, ...]], LangLexicon] = {}
+# 按语种各留一条：key 是语种，value 带上当时的 mtime 指纹用于判新旧。
+# 不要改成以 (语种, mtime) 为 key 再整表 clear —— 那样中英段落交替诊断时
+# 两套词库会互相挤出缓存、反复读盘并重建 Aho-Corasick 自动机。
+_CACHE: dict[Lang, tuple[tuple[float, ...], LangLexicon]] = {}
 
 
 def _dir_for(lang: Lang) -> Path:
@@ -120,10 +123,10 @@ def load_lexicon(lang: Lang | str) -> LangLexicon:
     stopword_path = base / "academic_stopwords.txt"
 
     watched = [connector_path, fluff_path, hat_boot_path, stopword_path]
-    cache_key = (lang_enum, _mtimes(watched))
-    cached = _CACHE.get(cache_key)
-    if cached is not None:
-        return cached
+    fingerprint = _mtimes(watched)
+    cached = _CACHE.get(lang_enum)
+    if cached is not None and cached[0] == fingerprint:
+        return cached[1]
 
     stopwords: frozenset[str] = frozenset()
     if stopword_path.is_file():
@@ -136,8 +139,8 @@ def load_lexicon(lang: Lang | str) -> LangLexicon:
         hat_boot_rules=_read_hat_boot(hat_boot_path),
         stopwords=stopwords,
     )
-    _CACHE.clear()  # 只保留最新一版，避免旧 mtime 条目堆积
-    _CACHE[cache_key] = lexicon
+    # 覆盖该语种的旧版本即可：其他语种的缓存保持不动。
+    _CACHE[lang_enum] = (fingerprint, lexicon)
     return lexicon
 
 

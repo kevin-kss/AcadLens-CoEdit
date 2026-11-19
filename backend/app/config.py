@@ -41,7 +41,19 @@ class Settings(BaseSettings):
     dictionaries_dir: Path = _REPO_ROOT / "dictionaries"
 
     # ---- Track B 阈值 ----
-    parallel_similarity_threshold: float = Field(default=0.78, ge=0, le=1)
+    # 两条骨架路径的相似度分布不同，必须各自标定，不可共用一个阈值：
+    # 词性近似骨架把实词压成 X、只留虚词与标点，序列字符重复度天然更高，
+    # SequenceMatcher 比值被系统性抬高。共用 0.78 会让同一篇稿子在
+    # 「装了 spaCy 模型」与「没装」的环境下得到不同的风险等级。
+    parallel_similarity_threshold: float = Field(
+        default=0.78, ge=0, le=1, description="真实依存骨架（dep）的排比判定阈值"
+    )
+    parallel_similarity_threshold_pos: float = Field(
+        default=0.90,
+        ge=0,
+        le=1,
+        description="词性近似骨架（pos 降级）的排比判定阈值，待真实语料重标",
+    )
     burstiness_human_floor: float = Field(
         default=0.30, description="人类写作句长 CV 典型下界，高于此不罚分"
     )

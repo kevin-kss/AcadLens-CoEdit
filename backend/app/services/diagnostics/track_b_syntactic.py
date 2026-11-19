@@ -20,24 +20,20 @@ from app.config import get_settings
 from app.schemas.diagnosis import IssueType, Lang, TextSpanIssue
 from app.schemas.document import SentenceSpan
 from app.services.diagnostics.nlp_provider import get_pipeline
+
+# effective_length 由 text_metrics 提供：Track B 与 Track C 必须共用同一个
+# 「一句话有多长」的定义，此处重导出以保持既有调用方的导入路径不变。
+from app.services.diagnostics.text_metrics import effective_length
 from app.services.parser.masker import MASK_TOKEN_RE
 
-# 计算有效长度时剔除的标点
-_PUNCT_RE_ZH = r"[^\w一-鿿]"
-
-
-def effective_length(sent: str, lang: Lang | str = Lang.ZH) -> int:
-    """剔除掩码占位符与标点后的有效长度。
-
-    中文按字计，英文按词计 —— 两者的「一句话有多长」量纲不同，混用会让
-    中英混排段落的 CV 完全失真。
-    """
-    import re
-
-    cleaned = MASK_TOKEN_RE.sub("", sent).strip()
-    if Lang(lang) is Lang.EN:
-        return len([w for w in cleaned.split() if any(c.isalnum() for c in w)])
-    return len(re.sub(_PUNCT_RE_ZH, "", cleaned))
+__all__ = [
+    "build_dep_skeletons",
+    "compute_burstiness_cv",
+    "detect_syntactic_parallelism",
+    "diagnose_track_b",
+    "effective_length",
+    "threshold_for_source",
+]
 
 
 def compute_burstiness_cv(
@@ -158,17 +154,32 @@ def build_dep_skeletons(
     return [_pos_skeleton_fallback(s, lang_enum) for s in sentences], "pos"
 
 
+def threshold_for_source(source: str) -> float:
+    """按骨架来源取排比阈值。
+
+    dep（真实依存）与 pos（词性近似降级）的相似度分布不同，共用一个阈值会
+    让同一段文本在装模型与不装模型的环境下落进不同的风险等级。
+    """
+    settings = get_settings()
+    if source == "pos":
+        return settings.parallel_similarity_threshold_pos
+    return settings.parallel_similarity_threshold
+
+
 def detect_syntactic_parallelism(
     dep_skeletons: list[str],
     threshold: float | None = None,
+    source: str = "dep",
 ) -> list[int]:
     """返回与相邻句结构高度雷同的句子下标。
 
     只比相邻句：跨句比对会把「同一段里两处恰好同构」误判为排比，而排比的
     阅读观感恰恰来自连续出现。
+
+    threshold 显式传入时优先；否则按 source 取对应阈值。
     """
     if threshold is None:
-        threshold = get_settings().parallel_similarity_threshold
+        threshold = threshold_for_source(source)
 
     parallel: set[int] = set()
     for i in range(1, len(dep_skeletons)):
@@ -209,7 +220,7 @@ def diagnose_track_b(
     texts = [s.text for s in sentences]
     cv = compute_burstiness_cv(texts, lang_enum)
     skeletons, source = build_dep_skeletons(texts, lang_enum)
-    parallel_idx = detect_syntactic_parallelism(skeletons)
+    parallel_idx = detect_syntactic_parallelism(skeletons, source=source)
 
     issues: list[TextSpanIssue] = []
     settings = get_settings()

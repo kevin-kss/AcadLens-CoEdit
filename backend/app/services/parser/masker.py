@@ -16,6 +16,13 @@ from app.schemas.document import MaskedText, MaskRegistry
 
 MASK_TOKEN_RE = re.compile(r"\{\{[A-Z_]+_\d+\}\}")
 
+# URL 的合法字符集（RFC 3986 的常见子集）。刻意**不含**中文与全角标点：
+# 用 \S* 会让贪婪匹配把 URL 后面的中文正文一起吞掉。
+# _URL_LAST 排除句末标点，保证 URL 不吞掉句点 —— 否则该处无法分句，
+# 相邻两句会被合并，污染句长、句法与段落风险统计。
+_URL_BODY = r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*"
+_URL_LAST = r"[A-Za-z0-9\-_~/#\[\]@$&*+=%]"
+
 # 按优先级从长到短匹配：行间公式 -> 行内公式 -> LaTeX 命令 -> 方括号引文
 # -> 著者年份引文 -> URL/DOI。顺序即优先级，先匹配者占位，后者不再进入其内部。
 MASK_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
@@ -32,8 +39,18 @@ MASK_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("MATH", re.compile(r"\$[^$\n]+\$|\\\([\s\S]+?\\\)")),
     # LaTeX 引用与标签命令
     ("LATEX_CMD", re.compile(r"\\(?:cite[tp]?|ref|eqref|label|autoref|nameref)\{[^}]+\}")),
-    # URL / DOI 先于引文匹配：避免 doi 中的括号数字被引文规则截断
-    ("URL", re.compile(r"https?://\S+|doi:\s*10\.\d{4,9}/\S+|\b10\.\d{4,9}/[^\s,;]+")),
+    # URL / DOI 先于引文匹配：避免 doi 中的括号数字被引文规则截断。
+    # 末尾用 _URL_LAST 收口，保证 URL 不吞掉紧跟其后的句末标点 —— 否则
+    # "See https://example.com. Results follow." 的句点会被掩码，分句器
+    # 无法识别句界，两句合并成一句，污染句长、句法与段落风险统计。
+    (
+        "URL",
+        re.compile(
+            rf"https?://{_URL_BODY}{_URL_LAST}"
+            rf"|doi:\s*10\.\d{{4,9}}/{_URL_BODY}{_URL_LAST}"
+            rf"|\b10\.\d{{4,9}}/{_URL_BODY}{_URL_LAST}"
+        ),
+    ),
     # 方括号数字引文：[12]、[1-3]、[1, 5, 9]
     ("CITE", re.compile(r"\[\s*\d+(?:\s*[-–~,，、]\s*\d+)*\s*\]")),
     # 著者年份引文：(Smith et al., 2024)、(Smith & Lee, 2023a)、（李雷等, 2024）

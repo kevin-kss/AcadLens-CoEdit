@@ -23,6 +23,7 @@ from app.config import get_settings
 from app.schemas.diagnosis import IssueType, Lang, TextSpanIssue
 from app.schemas.document import SentenceSpan
 from app.services.diagnostics.lexicon_loader import LangLexicon, load_lexicon
+from app.services.diagnostics.text_metrics import effective_length
 
 # ---------------------------------------------------------------------------
 # 具象锚点（Concrete Anchors）
@@ -76,6 +77,19 @@ def _get_automaton(words: tuple[str, ...], lang: Lang, kind: str) -> _Automaton:
     return cached
 
 
+def _lower_preserving_length(text: str) -> str:
+    """逐码点小写化，保证输出与输入长度一致。
+
+    直接 text.lower() 在 Unicode 下会改变长度：'İ'(U+0130) 小写为两个码点
+    'i'+U+0307。长度一变，自动机给出的命中下标就无法用于切原文 ——
+    前端拿到的偏移会整体错位。逐字符转换时，若某字符的小写展开为多码点
+    则保留原字符（它不可能是 ASCII 词库条目的一部分，不影响匹配）。
+    """
+    if text.isascii():
+        return text.lower()
+    return "".join(c.lower() if len(c.lower()) == 1 else c for c in text)
+
+
 def _boundary_ok(text: str, start: int, end: int) -> bool:
     """英文命中需两侧均非字母数字，避免 thus 命中 enthusiasm。"""
     before = text[start - 1] if start > 0 else " "
@@ -93,7 +107,11 @@ def _scan_phrases(
     if not words:
         return []
     auto = _get_automaton(words, lang, kind)
-    haystack = text.lower() if lang is Lang.EN else text
+    # 英文需大小写无关匹配，但**不能**用 text.lower()：Unicode 大小写展开会改变
+    # 字符串长度（如 "İ".lower() 为两个码点），使命中下标在原文中整体错位，
+    # 前端下划线随之画错位置。str.casefold 同样会展开，故改用逐字符的
+    # str.lower()，它对每个码点独立转换，长度恒等。
+    haystack = _lower_preserving_length(text) if lang is Lang.EN else text
 
     raw: list[tuple[int, int, str]] = []
     for end_idx, (length, original) in auto.machine.iter(haystack):
@@ -245,12 +263,15 @@ def _normalize_lexicon_score(
     """词库轨道的段落级风险分 -> [0,100]。
 
     按「每百字命中密度」而非绝对命中数归一化，否则长段落天然吃亏。
+
+    分母必须用 effective_length（剔除掩码占位符与标点）而非原始文本长度：
+    `{{CITE_1}}` 这类占位符长 10~12 字符，若计入分母，给段落多加几条引文
+    就能稀释密度、凭空降低风险分，而正文一字未改。
     """
     if not results or not sentences:
         return 0.0
 
-    total_len = sum(len(s.text.split()) if lang is Lang.EN else len(s.text) for s in sentences)
-    total_len = max(total_len, 1)
+    total_len = max(sum(effective_length(s.text, lang) for s in sentences), 1)
     unit = 100.0 if lang is Lang.ZH else 20.0  # 百字 / 二十词
 
     connector_density = sum(r.connector_hits for r in results) / total_len * unit
