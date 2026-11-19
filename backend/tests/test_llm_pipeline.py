@@ -237,13 +237,55 @@ class TestStage2Prompt:
         assert "76.3%" in combined
         assert "必须原样使用" in combined
 
-    def test_skipped_slot_forbids_vague_filler(self):
-        """跳过的槽位最关键：不能让模型用「显著」把空缺糊过去。"""
+    def test_skipped_slot_forbids_fabrication(self):
+        """缺数据时不得编造数值 —— 零捏造的底线。"""
         slots = [SlotCard(slot_id="s1", kind=SlotKind.METRIC, prompt="指标", value=None)]
         messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], slots, LOCKED, Lang.ZH)
         combined = "\n".join(m.content for m in messages)
-        assert "不得编造数值" in combined
-        assert "待补充" in combined
+        assert "不得编造任何数值" in combined
+
+    def test_skipped_slot_keeps_the_claim(self):
+        """论点结构是作者的，缺证据不等于可以删句子。"""
+        slots = [SlotCard(slot_id="s1", kind=SlotKind.METRIC, prompt="指标", value=None)]
+        messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], slots, LOCKED, Lang.ZH)
+        combined = "\n".join(m.content for m in messages)
+        assert "保留该论点" in combined
+        assert "不得改变原意" in combined
+
+    def test_skipped_slot_drops_degree_modifiers(self):
+        """去掉无证据的程度词，这是既不编造、不堆套话、也不改原意的唯一出路。
+
+        不能改用「显著」「多维度」填空：这批词正在本项目的空泛词表与帽句规则里，
+        写回去会被 Stage 2 后的诊断复测扣分，改写器与诊断器自相矛盾。
+        """
+        slots = [SlotCard(slot_id="s1", kind=SlotKind.METRIC, prompt="指标", value=None)]
+        messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], slots, LOCKED, Lang.ZH)
+        combined = "\n".join(m.content for m in messages)
+        assert "去掉没有证据支撑的程度修饰词" in combined
+        for modifier in ("显著", "多维度", "广阔"):
+            assert modifier in combined, f"程度词清单缺 {modifier}"
+
+    def test_skipped_slot_forbids_placeholder_markers(self):
+        """不写 [待补充]：原文常本就没有那些数据，作者也不打算补。
+
+        满屏占位标注等于要求作者补一份根本不存在的数据。
+        """
+        slots = [SlotCard(slot_id="s1", kind=SlotKind.METRIC, prompt="指标", value=None)]
+        messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], slots, LOCKED, Lang.ZH)
+        combined = "\n".join(m.content for m in messages)
+        assert "不得写" in combined and "待补充" in combined
+
+    def test_varied_strategy_requires_complete_short_sentence(self):
+        """错落版的短句约束必须要求语义完整。
+
+        旧提示词只规定「10 字以内」，模型为凑字数产出过「价值具体。」这种病句。
+        """
+        messages = build_restructure_messages(DraftStrategy.VARIED, "", [], [], [], Lang.ZH)
+        rule = messages[0].content
+        assert "语义完整" in rule
+        assert "凑不出" in rule or "不要插入" in rule
+        # 不应再出现写死的字数阈值
+        assert "10 字以内的短判断句" not in rule
 
     def test_guard_feedback_included_on_retry(self):
         messages = build_restructure_messages(

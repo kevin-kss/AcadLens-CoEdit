@@ -131,9 +131,12 @@ _STRATEGY_ZH: dict[DraftStrategy, str] = {
         "不写段尾意义升华句。"
     ),
     DraftStrategy.VARIED: (
-        "【错落版】刻意打破句长与句式的均匀：长短句交替，至少包含一个 10 字"
-        "以内的短判断句，且相邻句的主干结构不得雷同。同样不使用显性连接词，"
-        "不写帽句与升华句。"
+        "【错落版】刻意打破句长与句式的均匀：长短句交替，相邻句的主干结构不得"
+        "雷同。同样不使用显性连接词，不写帽句与升华句。\n"
+        "若内容允许，可插入一句简短的判断句来打破节奏，但该短句必须语义完整、"
+        "能够独立成立，且承载原文确有的信息；凑不出这样的短句就不要插入，"
+        "改用长短不等的正常句子即可 —— 绝不可为了凑字数写出「价值具体。」"
+        "这类不成句的碎片。"
     ),
     DraftStrategy.BLIND_OUTLINE: (
         "【盲写提纲】不要写成段落，只输出分点提纲：每点一行，以「- 」开头，"
@@ -149,9 +152,13 @@ _STRATEGY_EN: dict[DraftStrategy, str] = {
     ),
     DraftStrategy.VARIED: (
         "[Varied] Deliberately break uniform sentence length and structure: alternate "
-        "long and short sentences, include at least one clause under eight words, and "
-        "ensure no two adjacent sentences share the same main structure. Still no "
-        "explicit connectives, no opener, no closing elevation."
+        "long and short sentences, and ensure no two adjacent sentences share the same "
+        "main structure. Still no explicit connectives, no opener, no closing elevation.\n"
+        "A short decisive sentence may be used to break the rhythm, but only if it is "
+        "grammatically complete, stands on its own, and carries information the source "
+        "actually provides. If no such sentence is available, do not force one — vary "
+        "the length of ordinary sentences instead. Never emit a fragment to satisfy a "
+        "word count."
     ),
     DraftStrategy.BLIND_OUTLINE: (
         "[Outline] Do not write prose. Emit a bullet outline, one point per line "
@@ -164,8 +171,19 @@ _STRATEGY_EN: dict[DraftStrategy, str] = {
 def _slot_clause(slots: list[SlotCard], lang: Lang) -> str:
     """把槽位分为「已填」与「跳过」两类分别交代。
 
-    跳过的槽位最关键：必须明确要求模型保留空缺标注，而不是用形容词把空缺
-    糊过去 —— 「显著提升」正是这样产生的。
+    跳过的槽位是整个管线最微妙的地方，三条路都走不通，只剩第四条：
+
+    1. 编造数值 —— 违反零捏造，直接出局；
+    2. 用「显著」「多维度」这类程度词糊过去 —— 这批词正在本项目的空泛词表
+       与帽句规则里，写回去会被 Stage 2 后的诊断复测扣分，用户看到「改写后
+       更糟」，改写器与诊断器自相矛盾；
+    3. 整句不写 —— 会改变原文论点结构。论点是作者的，系统无权删；
+    4. **保留论点，去掉无证据支撑的程度修饰**。这是唯一既不编造、不堆套话、
+       也不改原意的做法，且去掉的恰好是 AI 味最重的部分。
+
+    也不写 [待补充]：真实场景里原文常本就没有那些数据，作者也不打算补
+    （目标是降低 AI 味，不是补实验），满屏占位标注等于要求作者补一份
+    根本不存在的数据。
     """
     filled = [s for s in slots if s.is_filled]
     skipped = [s for s in slots if not s.is_filled]
@@ -183,15 +201,34 @@ def _slot_clause(slots: list[SlotCard], lang: Lang) -> str:
         if lang is Lang.EN:
             lines = "\n".join(f"- {s.prompt}" for s in skipped)
             parts.append(
-                "The author skipped the following. Do NOT invent values and do NOT "
-                "paper over the gap with vague adjectives. Either omit the claim or "
-                "mark the gap as [TO BE SUPPLIED]:\n" + lines
+                "The author has no data for the following, and will not supply it. "
+                "Handle each one this way:\n"
+                "- KEEP the claim. Do not delete the sentence; the argument structure "
+                "is the author's.\n"
+                "- Do NOT invent any figure, dataset, year, or reference.\n"
+                "- Do NOT write placeholders such as [TO BE SUPPLIED].\n"
+                "- DROP the unsupported degree modifiers: significantly, substantially, "
+                "markedly, greatly, multi-faceted, crucial, vital, broad, promising. "
+                "State the claim plainly without them.\n"
+                "For example, 'significantly improves overall system performance' "
+                "becomes 'improves system performance'.\n"
+                "Missing data:\n" + lines
             )
         else:
             lines = "\n".join(f"- {s.prompt}" for s in skipped)
             parts.append(
-                "作者跳过了以下槽位。不得编造数值，也不得用「显著」「大幅」这类"
-                "空泛形容词把空缺糊过去。要么不写该论断，要么以「[待补充]」标注空缺：\n" + lines
+                "以下内容作者没有数据，且不会补充。请按这个方式处理每一项：\n"
+                "- **保留该论点**，不要删掉整句。论点结构是作者的，不得改变原意。\n"
+                "- 不得编造任何数值、数据集名称、年份、文献或实验条件。\n"
+                "- 不得写「[待补充]」「____」之类的占位标注。\n"
+                "- **去掉没有证据支撑的程度修饰词**：显著、大幅、明显、极大、充分、"
+                "多维度、全方位、深层次、重要、重大、广阔、巨大、良好。去掉后把论点"
+                "平实陈述出来即可。\n"
+                "例如「其显著提升了系统的整体效能」写成「该方法提升了系统效能」；"
+                "「具有多维度的应用价值」写成「可用于多类任务」；"
+                "「具有重要的理论意义与广阔的应用前景」写成「本研究的理论贡献与应用方向"
+                "见后文」。\n"
+                "缺少数据的项：\n" + lines
             )
 
     return "\n\n".join(parts)
