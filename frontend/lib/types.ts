@@ -136,7 +136,11 @@ export interface DeconstructResult {
   outline: string;
 }
 
-export type DraftStrategy = "plain" | "varied" | "blind_outline";
+/**
+ * Stage 2 的生成策略。只保留一种：用户要的是能直接复制使用的成稿，
+ * 并列多版等于把系统该做的判断推给用户。保留联合类型形态以便将来扩展。
+ */
+export type DraftStrategy = "plain";
 
 export type GuardViolationType =
   | "mask_token_missing"

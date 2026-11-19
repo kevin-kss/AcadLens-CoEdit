@@ -126,44 +126,40 @@ def build_deconstruct_messages(
 
 _STRATEGY_ZH: dict[DraftStrategy, str] = {
     DraftStrategy.PLAIN: (
-        "【直叙版】按事实的逻辑顺序平实叙述。不使用显性连接词（此外、因此、"
-        "综上所述等），靠主语指代与因果关系本身连句。不写段首铺垫句，"
-        "不写段尾意义升华句。"
-    ),
-    DraftStrategy.VARIED: (
-        "【错落版】刻意打破句长与句式的均匀：长短句交替，相邻句的主干结构不得"
-        "雷同。同样不使用显性连接词，不写帽句与升华句。\n"
-        "若内容允许，可插入一句简短的判断句来打破节奏，但该短句必须语义完整、"
-        "能够独立成立，且承载原文确有的信息；凑不出这样的短句就不要插入，"
-        "改用长短不等的正常句子即可 —— 绝不可为了凑字数写出「价值具体。」"
-        "这类不成句的碎片。"
-    ),
-    DraftStrategy.BLIND_OUTLINE: (
-        "【盲写提纲】不要写成段落，只输出分点提纲：每点一行，以「- 」开头，"
-        "只保留事实骨架与待补数据的位置，供作者自行扩写。"
+        "按事实的逻辑顺序平实叙述，输出一段可以直接使用的正文。\n"
+        "1. 不使用显性连接词（此外、因此、综上所述、值得注意的是等），"
+        "靠主语指代与因果关系本身连句。\n"
+        "2. 不写段首背景铺垫句，不写段尾意义升华句。\n"
+        "3. 打破句长与句式的均匀：相邻句的主干结构不得雷同，句子长度要有明显"
+        "差异，不要写成几个长度相近的长句。这是让文本读起来像人写的关键 ——"
+        "生成式文本的典型特征正是句长整齐、句式同构。\n"
+        "4. 若原文内容允许，可用一句简短有力的判断句打破节奏，但它必须语义"
+        "完整、能独立成立、且承载原文确有的信息。凑不出就不要硬插，"
+        "改为拉开长句之间的字数差 —— 绝不可为了凑字数写出「价值具体。」"
+        "这类不成句的碎片。\n"
+        "5. 不要扩写：不得为了调整节奏而把同一个意思重复表述或拉长篇幅，"
+        "成稿篇幅应不超过原文。"
     ),
 }
 
 _STRATEGY_EN: dict[DraftStrategy, str] = {
     DraftStrategy.PLAIN: (
-        "[Plain] State the facts in logical order. Use no explicit connectives "
-        "(moreover, therefore, in conclusion). Let subject reference and causality "
-        "carry the links. No opening scene-setting and no closing significance claim."
-    ),
-    DraftStrategy.VARIED: (
-        "[Varied] Deliberately break uniform sentence length and structure: alternate "
-        "long and short sentences, and ensure no two adjacent sentences share the same "
-        "main structure. Still no explicit connectives, no opener, no closing elevation.\n"
-        "A short decisive sentence may be used to break the rhythm, but only if it is "
+        "State the facts in logical order and return one paragraph the author can use "
+        "as is.\n"
+        "1. Use no explicit connectives (moreover, therefore, in conclusion, it is "
+        "worth noting). Let subject reference and causality carry the links.\n"
+        "2. No opening scene-setting, no closing significance claim.\n"
+        "3. Break uniform sentence length and structure: no two adjacent sentences may "
+        "share the same main structure, and sentence lengths must differ noticeably. "
+        "Do not produce several long sentences of similar length. This is what makes "
+        "text read as human-written — generated prose is marked by even length and "
+        "repeated structure.\n"
+        "4. A short decisive sentence may break the rhythm, but only if it is "
         "grammatically complete, stands on its own, and carries information the source "
-        "actually provides. If no such sentence is available, do not force one — vary "
-        "the length of ordinary sentences instead. Never emit a fragment to satisfy a "
-        "word count."
-    ),
-    DraftStrategy.BLIND_OUTLINE: (
-        "[Outline] Do not write prose. Emit a bullet outline, one point per line "
-        "starting with '- ', keeping only the factual skeleton and the positions where "
-        "data is still missing, for the author to expand."
+        "actually provides. If none is available, widen the gap between long sentences "
+        "instead. Never emit a fragment to satisfy a word count.\n"
+        "5. Do not expand: never restate the same point or pad the text to adjust "
+        "rhythm. The result must not be longer than the source."
     ),
 }
 

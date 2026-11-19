@@ -246,16 +246,18 @@ def restructure_paragraph(
     strategies: list[DraftStrategy] | None = None,
     max_retries: int = 1,
 ) -> RestructureResult:
-    """Stage 2：按三种策略生成候选草稿，逐份过门禁并复测风险分。
+    """Stage 2：生成候选草稿，过门禁并复测风险分。
+
+    默认只生成一版（PLAIN）：用户要的是能直接复制使用的成稿，并列多版等于把
+    系统该做的判断推给用户。详见 DraftStrategy 的说明。
+
+    strategies 仍保留为参数：契约里是可扩展的策略位，将来加回别的写法时
+    不必改动函数签名。
 
     串行生成：ChatClient 是同步协议，并发需要调用方自行包装线程池 ——
     在这里起线程会让 ScriptedClient 的响应顺序不可预测，测试随之不可重现。
     """
-    picked = strategies or [
-        DraftStrategy.PLAIN,
-        DraftStrategy.VARIED,
-        DraftStrategy.BLIND_OUTLINE,
-    ]
+    picked = strategies or [DraftStrategy.PLAIN]
     risk_before = diagnose_paragraph(
         outline.paragraph_id, original_masked, outline.lang
     ).overall_risk

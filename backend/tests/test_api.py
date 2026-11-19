@@ -241,7 +241,7 @@ class TestAssistDeconstruct:
 
 
 class TestAssistRestructure:
-    def test_returns_three_candidates(self, client: TestClient):
+    def test_returns_single_candidate(self, client: TestClient):
         doc_id = create_doc(client).document_id
         app.dependency_overrides[get_llm_client] = lambda: ScriptedClient(
             default_response=GOOD_DRAFT
@@ -252,12 +252,8 @@ class TestAssistRestructure:
         )
         assert response.status_code == 200
         payload = response.json()
-        assert len(payload["candidates"]) == 3
-        assert {c["strategy"] for c in payload["candidates"]} == {
-            "plain",
-            "varied",
-            "blind_outline",
-        }
+        assert len(payload["candidates"]) == 1
+        assert payload["candidates"][0]["strategy"] == "plain"
 
     def test_risk_comparison_present(self, client: TestClient):
         doc_id = create_doc(client).document_id
@@ -284,7 +280,7 @@ class TestAssistRestructure:
             json={"paragraph_id": "p0", "slots": []},
         )
         candidates = response.json()["candidates"]
-        assert len(candidates) == 3
+        assert len(candidates) == 1
         assert all(c["reject_reason"] for c in candidates)
         assert all(c["masked_text"] for c in candidates)
 

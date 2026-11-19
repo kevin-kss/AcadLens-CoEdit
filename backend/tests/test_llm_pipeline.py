@@ -275,17 +275,28 @@ class TestStage2Prompt:
         combined = "\n".join(m.content for m in messages)
         assert "不得写" in combined and "待补充" in combined
 
-    def test_varied_strategy_requires_complete_short_sentence(self):
-        """错落版的短句约束必须要求语义完整。
+    def test_short_sentence_must_be_complete(self):
+        """短句约束必须要求语义完整。
 
-        旧提示词只规定「10 字以内」，模型为凑字数产出过「价值具体。」这种病句。
+        早期提示词只规定「10 字以内」，模型为凑字数产出过「价值具体。」这种病句。
         """
-        messages = build_restructure_messages(DraftStrategy.VARIED, "", [], [], [], Lang.ZH)
+        messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], [], [], Lang.ZH)
         rule = messages[0].content
         assert "语义完整" in rule
-        assert "凑不出" in rule or "不要插入" in rule
-        # 不应再出现写死的字数阈值
+        assert "凑不出" in rule
         assert "10 字以内的短判断句" not in rule
+
+    def test_prompt_requires_breaking_uniform_length(self):
+        """打破句长均匀是降 AI 味的主要手段，收敛为一版时不能随错落版一起删掉。"""
+        rule = build_restructure_messages(DraftStrategy.PLAIN, "", [], [], [], Lang.ZH)[0].content
+        assert "打破句长" in rule
+        assert "主干结构不得雷同" in rule
+
+    def test_prompt_forbids_expansion(self):
+        """错落版曾为调节奏把信息摊长，实质是扩写。唯一版须明确禁止。"""
+        rule = build_restructure_messages(DraftStrategy.PLAIN, "", [], [], [], Lang.ZH)[0].content
+        assert "不要扩写" in rule
+        assert "不超过原文" in rule
 
     def test_guard_feedback_included_on_retry(self):
         messages = build_restructure_messages(
@@ -300,16 +311,12 @@ class TestStage2Prompt:
         messages = build_restructure_messages(strategy, "", [], [], [], Lang.ZH)
         assert messages[0].content
 
-    def test_strategies_differ_from_each_other(self):
-        texts = {
-            s: build_restructure_messages(s, "", [], [], [], Lang.ZH)[0].content
-            for s in DraftStrategy
-        }
-        assert len(set(texts.values())) == len(DraftStrategy)
+    def test_only_one_strategy_exists(self):
+        """只保留一版：用户要能直接复制使用的成稿，并列多版是把判断推给用户。
 
-    def test_outline_strategy_requests_bullets(self):
-        messages = build_restructure_messages(DraftStrategy.BLIND_OUTLINE, "", [], [], [], Lang.ZH)
-        assert "提纲" in messages[0].content
+        实测中错落版风险分（36.2）反而高于直叙版（22.5），排序都反了。
+        """
+        assert list(DraftStrategy) == [DraftStrategy.PLAIN]
 
     def test_prompts_forbid_explicit_connectives(self):
         messages = build_restructure_messages(DraftStrategy.PLAIN, "", [], [], [], Lang.ZH)
@@ -356,8 +363,8 @@ class TestStage2GuardLoop:
         assert candidate.masked_text == BAD_DRAFT
         assert candidate.guard_result.violations
 
-    def test_llm_failure_does_not_kill_other_strategies(self):
-        """单策略失败只标记自己，其余候选照常返回。"""
+    def test_llm_failure_is_marked_not_raised(self):
+        """模型调用失败应标记在候选上，而不是向上抛错中断整个请求。"""
 
         class FlakyClient:
             def __init__(self) -> None:
@@ -377,10 +384,12 @@ class TestStage2GuardLoop:
                 return GOOD_DRAFT
 
         result = restructure_paragraph(ORIGINAL, make_outline(), FlakyClient(), max_retries=0)
-        assert len(result.candidates) == 3
-        assert not result.candidates[0].accepted
-        assert "模型调用失败" in result.candidates[0].reject_reason
-        assert all(c.accepted for c in result.candidates[1:])
+        assert len(result.candidates) == 1
+        candidate = result.candidates[0]
+        assert not candidate.accepted
+        assert "模型调用失败" in candidate.reject_reason
+        # 仍返回结果对象而非抛错，前端据此提示而不是白屏
+        assert result.risk_before > 0
 
     def test_no_locked_terms_still_checks_masks(self):
         outline = make_outline(locked_terms=[])
@@ -420,11 +429,18 @@ class TestStage2RiskComparison:
         assert candidate.guard_result.passed
         assert candidate.accepted
 
-    def test_all_three_strategies_by_default(self):
+    def test_single_candidate_by_default(self):
+        """默认只生成一版，不再并列三版。"""
         client = ScriptedClient(default_response=GOOD_DRAFT)
         result = restructure_paragraph(ORIGINAL, make_outline(), client)
-        assert [c.strategy for c in result.candidates] == list(DraftStrategy)
-        assert len(result.accepted_candidates) == 3
+        assert [c.strategy for c in result.candidates] == [DraftStrategy.PLAIN]
+        assert len(result.accepted_candidates) == 1
+
+    def test_only_one_model_call_per_draft(self):
+        """一版一次调用：三版并列时要调三次，Token 成本是三倍。"""
+        client = ScriptedClient(default_response=GOOD_DRAFT)
+        restructure_paragraph(ORIGINAL, make_outline(), client)
+        assert len(client.calls) == 1
 
 
 class TestScriptedClient:

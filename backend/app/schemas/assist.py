@@ -65,11 +65,24 @@ class DeconstructResult(BaseModel):
 
 
 class DraftStrategy(StrEnum):
-    """Stage 2 的三种生成策略（见技术文档 5.2）。"""
+    """Stage 2 的生成策略。
+
+    只保留一种（PLAIN）。技术文档 5.2 原设计是三版并列供用户挑选，实测后
+    收敛为一版：
+
+    - 「错落版」为了打破句长把同样的信息摊得更长，实质是扩写，对想直接复制
+      粘贴的用户是负担；而且实测它的风险分（36.2）反而高于直叙版（22.5），
+      排序都反了 —— 并列三版等于把系统该做的判断推给用户。
+    - 「盲写提纲」不是成稿，用户要的是能直接用的文本。
+
+    「打破句长均匀」这条要求没有丢，已合并进 PLAIN 的提示词 —— 它是降低
+    AI 味的主要手段，不能随错落版一起删掉。
+
+    枚举形态保留（而非改成单个常量）：契约里仍是可扩展的策略位，
+    将来若要加回别的写法不必改动 API 形状。
+    """
 
     PLAIN = "plain"
-    VARIED = "varied"
-    BLIND_OUTLINE = "blind_outline"
 
 
 class DraftCandidate(BaseModel):

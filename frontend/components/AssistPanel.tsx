@@ -17,9 +17,7 @@ import { useWorkbench } from "@/lib/store";
 import type { DraftCandidate, DraftStrategy, SlotKind } from "@/lib/types";
 
 const STRATEGY_LABEL: Record<DraftStrategy, string> = {
-  plain: "直叙版",
-  varied: "错落版",
-  blind_outline: "盲写提纲",
+  plain: "改写结果",
 };
 
 const SLOT_PLACEHOLDER: Record<SlotKind, string> = {
@@ -141,7 +139,7 @@ export function AssistPanel() {
       <header className="panel-head">
         <h2>抽骨精修</h2>
         <p className="panel-hint">
-          先抽取事实与待补数据，再按三种策略重写。改写结果须通过术语门禁才可采纳。
+          先抽取事实与待补数据，再生成可直接使用的改写结果。结果须通过术语门禁才可采纳。
         </p>
       </header>
 
@@ -157,7 +155,7 @@ export function AssistPanel() {
           disabled={busy || !result}
           title={result ? "" : "先完成第一步"}
         >
-          {busy && stage === "slots" ? "正在生成…" : "② 生成候选草稿"}
+          {busy && stage === "slots" ? "正在生成…" : "② 生成改写结果"}
         </button>
       </div>
 
@@ -208,10 +206,8 @@ export function AssistPanel() {
 
       {drafts && (
         <div className="draft-box">
-          <h3>
-            候选草稿（通过 {drafts.candidates.filter((c) => !c.reject_reason).length} /{" "}
-            {drafts.candidates.length}）
-          </h3>
+          {/* 只生成一版，故不再显示「通过 x / y」计数 —— 那是三版并列时代的遗留 */}
+          <h3>改写结果</h3>
           {drafts.candidates.map((c) => (
             <CandidateCard key={c.strategy} candidate={c} />
           ))}
